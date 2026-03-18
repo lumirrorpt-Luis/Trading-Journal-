@@ -16,7 +16,7 @@ const stratColorList = ["#818cf8","#34d399","#fb923c","#f472b6","#facc15","#38bd
 const pairColorList = ["#60a5fa","#a78bfa","#fbbf24","#34d399","#f87171","#fb923c"]
 const emotionColorList = ["#4ade80","#818cf8","#f87171","#fbbf24","#38bdf8","#f472b6"]
 
-const emptyEntry = () => ({ pair:"",strategy:"",reason:"",right:"",mistakes:"",learnings:"",outcome:"",pnl:"",grade:"",rr:"",emotion:"",accountSize:"",screenshots:{} })
+const emptyEntry = () => ({ pair:"",strategy:"",reason:"",right:"",mistakes:"",learnings:"",outcome:"",pnl:"",grade:"",rr:"",emotion:"",accountSize:"",direction:"",screenshots:{} })
 
 const s = {
   app: { background:"#0f1117", minHeight:"100vh", color:"#e2e8f0", fontFamily:"system-ui, sans-serif", padding:0 },
@@ -293,7 +293,7 @@ export default function Journal() {
     const f=form
     const imgs=Object.values(f.screenshots||{})
     const tfList=Object.keys(f.screenshots||{}).join(", ")
-    const prompt=`You are a professional trading coach reviewing a trader's journal entry.\n\nTrade details:\n- Date: ${selectedDate}\n- Pair: ${f.pair||"N/A"}\n- Strategy: ${f.strategy||"N/A"}\n- Reason to enter: ${f.reason||"N/A"}\n- Outcome: ${f.outcome||"N/A"}\n- P&L: ${f.pnl||"N/A"}\n- R:R ratio: ${f.rr||"N/A"}\n- Grade: ${f.grade||"N/A"}\n- Emotional state: ${f.emotion||"N/A"}\n- What went right: ${f.right||"N/A"}\n- Mistakes: ${f.mistakes||"N/A"}\n- Learnings: ${f.learnings||"N/A"}\n- Chart timeframes: ${tfList||"None"}\n\n${imgs.length?`Analyse the ${imgs.length} chart screenshot(s) for price action, structure, trend and entry quality.`:""}\n\nProvide:\n1. Chart analysis (if images provided)\n2. Trade execution review\n3. Risk management feedback\n4. Emotional/psychological notes\n5. Key improvement point`
+    const prompt=`You are a professional trading coach reviewing a trader's journal entry.\n\nTrade details:\n- Date: ${selectedDate}\n- Pair: ${f.pair||"N/A"}\n- Direction: ${f.direction||"N/A"}\n- Strategy: ${f.strategy||"N/A"}\n- Reason to enter: ${f.reason||"N/A"}\n- Outcome: ${f.outcome||"N/A"}\n- P&L: ${f.pnl||"N/A"}\n- R:R ratio: ${f.rr||"N/A"}\n- Grade: ${f.grade||"N/A"}\n- Emotional state: ${f.emotion||"N/A"}\n- What went right: ${f.right||"N/A"}\n- Mistakes: ${f.mistakes||"N/A"}\n- Learnings: ${f.learnings||"N/A"}\n- Chart timeframes: ${tfList||"None"}\n\n${imgs.length?`Analyse the ${imgs.length} chart screenshot(s) for price action, structure, trend and entry quality.`:""}\n\nProvide:\n1. Chart analysis (if images provided)\n2. Trade execution review\n3. Risk management feedback\n4. Emotional/psychological notes\n5. Key improvement point`
     const result = await callAI(prompt, imgs)
     const newDailyAI = {...dailyAI,[selectedDate]:result}
     setDailyAI(newDailyAI)
@@ -304,7 +304,7 @@ export default function Journal() {
   const runGradeSuggest = async () => {
     setGradeSuggestLoading(true)
     const f=form
-    const prompt=`You are a trading coach. Based on this trade, suggest a grade (A, B, C, or D) and explain why in 2-3 sentences.\n\n- Strategy: ${f.strategy||"N/A"}\n- Reason: ${f.reason||"N/A"}\n- Outcome: ${f.outcome||"N/A"}\n- R:R: ${f.rr||"N/A"}\n- Emotion: ${f.emotion||"N/A"}\n- What went right: ${f.right||"N/A"}\n- Mistakes: ${f.mistakes||"N/A"}\n\nRespond with: "Suggested grade: X — [brief reason]"`
+    const prompt=`You are a trading coach. Based on this trade, suggest a grade (A, B, C, or D) and explain why in 2-3 sentences.\n\n- Direction: ${f.direction||"N/A"}\n- Strategy: ${f.strategy||"N/A"}\n- Reason: ${f.reason||"N/A"}\n- Outcome: ${f.outcome||"N/A"}\n- R:R: ${f.rr||"N/A"}\n- Emotion: ${f.emotion||"N/A"}\n- What went right: ${f.right||"N/A"}\n- Mistakes: ${f.mistakes||"N/A"}\n\nRespond with: "Suggested grade: X — [brief reason]"`
     const result = await callAI(prompt,[])
     setGradeSuggest(result)
     setGradeSuggestLoading(false)
@@ -318,7 +318,7 @@ export default function Journal() {
     const weekDates=Array.from({length:5},(_,i)=>{ const dd=new Date(mon); dd.setDate(mon.getDate()+i); return dd.toISOString().slice(0,10) })
     const weekTrades=weekDates.map(dt=>entries[dt]?{date:dt,...entries[dt]}:null).filter(Boolean)
     if(!weekTrades.length){const newW={...weeklyAI,[weekKey]:"No trades logged this week."};setWeeklyAI(newW);await saveAI({dailyAI,weeklyAI:newW,patternAI,briefingAI});setWeeklyAILoading(false);return}
-    const summary=weekTrades.map(t=>`${t.date}: ${t.pair||"?"} | ${t.strategy||"?"} | ${t.outcome||"?"} | P&L: ${t.pnl||"0"} | Grade: ${t.grade||"?"} | Emotion: ${t.emotion||"?"}`).join("\n")
+    const summary=weekTrades.map(t=>`${t.date}: ${t.pair||"?"} | ${t.direction||"?"} | ${t.strategy||"?"} | ${t.outcome||"?"} | P&L: ${t.pnl||"0"} | Grade: ${t.grade||"?"} | Emotion: ${t.emotion||"?"}`).join("\n")
     const prompt=`You are a professional trading coach. Analyse this trader's week.\n\nWeekly trades:\n${summary}\n\nProvide:\n1. Weekly performance summary\n2. What went well\n3. Key patterns in mistakes or emotional states\n4. Best and worst trade\n5. 3 specific action points for next week`
     const result = await callAI(prompt,[])
     const newW={...weeklyAI,[weekKey]:result}
@@ -333,8 +333,8 @@ export default function Journal() {
     const patternKey=new Date().toISOString().slice(0,10)
     setSelectedPatternKey(patternKey)
     if(allTrades.length<3){const newP={...patternAI,[patternKey]:"Log at least 3 trades to detect patterns."};setPatternAI(newP);await saveAI({dailyAI,weeklyAI,patternAI:newP,briefingAI});setPatternAILoading(false);return}
-    const summary=allTrades.slice(-50).map(t=>`${t.date}: ${t.pair||"?"} | ${t.strategy||"?"} | ${t.outcome||"?"} | P&L: ${t.pnl||"0"} | Grade: ${t.grade||"?"} | Emotion: ${t.emotion||"?"} | Day: ${new Date(t.date+"T12:00:00").toLocaleDateString("en-GB",{weekday:"short"})}`).join("\n")
-    const prompt=`You are a trading data analyst. Find meaningful patterns in this trader's history.\n\nTrade history:\n${summary}\n\nReport on:\n1. Best and worst performing pair\n2. Best and worst strategy\n3. Emotional state vs outcomes\n4. Day of week patterns\n5. Grade vs outcome correlation\n6. Any other significant patterns\n\nBe specific with numbers and percentages.`
+    const summary=allTrades.slice(-50).map(t=>`${t.date}: ${t.pair||"?"} | ${t.direction||"?"} | ${t.strategy||"?"} | ${t.outcome||"?"} | P&L: ${t.pnl||"0"} | Grade: ${t.grade||"?"} | Emotion: ${t.emotion||"?"} | Day: ${new Date(t.date+"T12:00:00").toLocaleDateString("en-GB",{weekday:"short"})}`).join("\n")
+    const prompt=`You are a trading data analyst. Find meaningful patterns in this trader's history.\n\nTrade history:\n${summary}\n\nReport on:\n1. Best and worst performing pair\n2. Best and worst strategy\n3. Long vs short performance\n4. Emotional state vs outcomes\n5. Day of week patterns\n6. Grade vs outcome correlation\n7. Any other significant patterns\n\nBe specific with numbers and percentages.`
     const result = await callAI(prompt,[])
     const newP={...patternAI,[patternKey]:result}
     setPatternAI(newP)
@@ -347,7 +347,7 @@ export default function Journal() {
     const overview=weekOverviews[wk]||{}
     const notes=pairs.map(p=>`${p}: ${overview[p]||"No notes"}`).join("\n")
     const allTrades=Object.entries(entries).map(([k,v])=>({date:k,...v})).filter(t=>t.outcome).slice(-20)
-    const recentSummary=allTrades.map(t=>`${t.date}: ${t.pair||"?"} | ${t.strategy||"?"} | ${t.outcome||"?"}`).join("\n")
+    const recentSummary=allTrades.map(t=>`${t.date}: ${t.pair||"?"} | ${t.direction||"?"} | ${t.strategy||"?"} | ${t.outcome||"?"}`).join("\n")
     const prompt=`You are a professional trading analyst preparing a trader for their week.\n\nPre-week notes per pair:\n${notes}\n\nRecent trade history:\n${recentSummary}\n\nProvide:\n1. Organised trade plan per pair\n2. Risk reminders based on recent patterns\n3. Weekly mindset focus\n4. What to watch out for`
     const result = await callAI(prompt,[])
     setBriefingAI(result)
@@ -514,6 +514,11 @@ export default function Journal() {
                 <InlineAddSelect label="Strategy" value={form.strategy} onChange={v=>updateForm(p=>({...p,strategy:v}))} listItems={strategies} setListItems={p=>{setStrategies(p);saveLists({pairs,strategies:p,emotions})}} />
               </div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(160px,1fr))",gap:12}}>
+                <Field label="Direction">
+                  <div style={{display:"flex",gap:6}}>
+                    {["Long","Short"].map(d=><button key={d} onClick={()=>updateForm(p=>({...p,direction:d}))} style={s.btn(form.direction===d, d==="Long"?"#4ade80":"#f87171")}>{d}</button>)}
+                  </div>
+                </Field>
                 <Field label="Outcome"><div style={{display:"flex",gap:6}}>{OUTCOMES.map(o=><button key={o} onClick={()=>updateForm(p=>({...p,outcome:o}))} style={s.btn(form.outcome===o,outcomeColor[o])}>{o}</button>)}</div></Field>
                 <Field label="P&L ($)"><input style={s.inp} type="number" placeholder="e.g. 250 or -150" value={form.pnl} onChange={e=>updateForm(p=>({...p,pnl:e.target.value}))} /></Field>
               </div>
@@ -653,12 +658,13 @@ export default function Journal() {
                 <div style={{fontSize:12,fontWeight:500,color:"#6b7280",marginBottom:14,textTransform:"uppercase",letterSpacing:"0.04em"}}>Trade log — {MONTHS[dashMonth]} {dashYear}</div>
                 <div style={{overflowX:"auto"}}>
                   <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
-                    <thead><tr style={{borderBottom:"0.5px solid #2d3448"}}>{["Date","Pair","Strategy","Outcome","P&L","Grade","R:R","Emotion"].map(h=><th key={h} style={{padding:"6px 10px",textAlign:"left",color:"#6b7280",fontWeight:500}}>{h}</th>)}</tr></thead>
+                    <thead><tr style={{borderBottom:"0.5px solid #2d3448"}}>{["Date","Pair","Direction","Strategy","Outcome","P&L","Grade","R:R","Emotion"].map(h=><th key={h} style={{padding:"6px 10px",textAlign:"left",color:"#6b7280",fontWeight:500}}>{h}</th>)}</tr></thead>
                     <tbody>
                       {dashTrades.filter(t=>t.outcome).sort((a,b)=>a.key<b.key?-1:1).map((t,i)=>(
                         <tr key={i} onClick={()=>{setSelectedDate(t.key);setTab("journal")}} style={{borderBottom:"0.5px solid #1a2035",cursor:"pointer"}}>
                           <td style={{padding:"8px 10px",color:"#6b7280"}}>{new Date(t.key+"T12:00:00").toLocaleDateString("en-GB",{day:"2-digit",month:"short"})}</td>
                           <td style={{padding:"8px 10px",fontWeight:500,color:pairColorMap[t.pair]||"#e2e8f0"}}>{t.pair}</td>
+                          <td style={{padding:"8px 10px",fontWeight:500,color:t.direction==="Long"?"#4ade80":t.direction==="Short"?"#f87171":"#9ca3af"}}>{t.direction||"-"}</td>
                           <td style={{padding:"8px 10px",color:stratColorMap[t.strategy]||"#9ca3af"}}>{t.strategy}</td>
                           <td style={{padding:"8px 10px",fontWeight:500,color:outcomeColor[t.outcome]||"#e2e8f0"}}>{t.outcome}</td>
                           <td style={{padding:"8px 10px",color:parseFloat(t.pnl)>=0?"#e2e8f0":"#60a5fa"}}>{t.pnl?`${parseFloat(t.pnl)>=0?"+":""}$${parseFloat(t.pnl).toFixed(2)}`:"-"}</td>
