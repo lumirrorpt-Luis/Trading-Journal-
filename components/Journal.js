@@ -357,9 +357,15 @@ export default function Journal() {
 
   const exportJSON = () => {
     const data={entries,weekOverviews,lists:{pairs,strategies,emotions},ai:{dailyAI,weeklyAI,patternAI,briefingAI}}
-    const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"})
+    const json=JSON.stringify(data,null,2)
+    const blob=new Blob([json],{type:"application/json"})
     const url=URL.createObjectURL(blob)
-    const a=document.createElement("a");a.href=url;a.download=`trading-journal-backup-${new Date().toISOString().slice(0,10)}.json`;a.click()
+    const link=document.createElement("a")
+    link.setAttribute("href",url)
+    link.setAttribute("download",`trading-journal-backup-${new Date().toISOString().slice(0,10)}.json`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
     URL.revokeObjectURL(url)
   }
 
